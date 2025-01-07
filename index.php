@@ -109,6 +109,16 @@ foreach ($response['results'] as $result) {
       </div>
       <?php endforeach ?>
 
+      <?php if(count($meetings) < 1): ?>
+      <div class="row me-1">
+        <div class="col mt-3 bg-light rounded">
+          <p class="text-muted mt-2 mb-2">
+            No upcoming meetings planned yet.
+          </p>
+        </div>
+      </div>
+      <?php endif ?>
+
       <p class="mt-3">
         The Indico category for all FCC Software and Computing meetings can be found
         <a href="https://indico.cern.ch/category/5666/"
