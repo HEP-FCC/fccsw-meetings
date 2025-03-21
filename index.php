@@ -7,6 +7,10 @@ $url = $url . '&order=start';
 $response = json_decode(file_get_contents($url), true);
 
 $meetings = array();
+$meetings['this-week'] = array();
+$meetings['next-week'] = array();
+$meetings['this-month'] = array();
+$meetings['next-month'] = array();
 foreach ($response['results'] as $result) {
   $meeting = array();
 
@@ -20,10 +24,8 @@ foreach ($response['results'] as $result) {
   $meeting['description'] = $result['description'];
 
   // Start time
-  $startTimeStr = $result['startDate']['date'] . " " .
-                  $result['startDate']['time'];
   $startTime = new DateTime(
-    $startTimeStr,
+    $result['startDate']['date'] . " " . $result['startDate']['time'],
     new DateTimeZone($result['startDate']['tz'])
   );
   $meeting['startTime'] = $startTime->format('Y M d, H:i T');
@@ -40,7 +42,22 @@ foreach ($response['results'] as $result) {
 
   // print_r($result);
   // echo "<br><br><br><br>";
-  array_push($meetings, $meeting);
+  $laterNextmonth = false;
+  if (date('W') == $startTime->format('W')) {
+    array_push($meetings['this-week'], $meeting);
+    if ((date('m') + 1) == $startTime->format('m')) {
+      $laterNextmonth = true;
+    }
+  } elseif ((date('W') + 1) == $startTime->format('W')) {
+    array_push($meetings['next-week'], $meeting);
+    if ((date('m') + 1) == $startTime->format('m')) {
+      $laterNextmonth = true;
+    }
+  } elseif (date('m') == $startTime->format('m')) {
+    array_push($meetings['this-month'], $meeting);
+  } elseif ((date('m') + 1) == $startTime->format('m')) {
+    array_push($meetings['next-month'], $meeting);
+  }
 }
 ?>
 
@@ -57,7 +74,24 @@ foreach ($response['results'] as $result) {
   </head>
   <body>
     <div class="container">
-      <?php foreach($meetings as $meeting): ?>
+      <?php foreach($meetings as $period => $meetingsInPeriod): ?>
+      <?php if ($period == 'this-week' && count($meetingsInPeriod) > 0): ?>
+      <h4 class="mb-0">This Week</h4>
+      <?php endif ?>
+      <?php if ($period == 'next-week' && count($meetingsInPeriod) > 0): ?>
+      <h4 class="mt-3 mb-0">Next Week</h4>
+      <?php endif ?>
+      <?php if ($period == 'this-month' && count($meetingsInPeriod) > 0): ?>
+      <h4 class="mt-3 mb-0">Later This Month</h4>
+      <?php endif ?>
+      <?php if ($period == 'next-month' && count($meetingsInPeriod) > 0): ?>
+      <?php if ($laterNextmonth): ?>
+      <h4 class="mt-3 mb-0">Later Next Month</h4>
+      <?php else: ?>
+      <h4 class="mt-3 mb-0">Next Month</h4>
+      <?php endif ?>
+      <?php endif ?>
+      <?php foreach($meetingsInPeriod as $meeting): ?>
       <div class="row me-1">
         <div class="col mt-3 bg-light rounded">
           <p class="text-muted mb-0">
@@ -108,8 +142,9 @@ foreach ($response['results'] as $result) {
         </div>
       </div>
       <?php endforeach ?>
+      <?php endforeach ?>
 
-      <?php if(count($meetings) < 1): ?>
+      <?php if(array_sum(array_map('count', $meetings)) < 1): ?>
       <div class="row me-1">
         <div class="col mt-3 bg-light rounded">
           <p class="text-muted mt-2 mb-2">
