@@ -11,6 +11,20 @@ webpage.
         title="FCC Software Meetings"></iframe>
 ```
 
+
+## Local development
+
+Install PHP, for RedHat based Linux distributions use:
+```
+dnf install php-cli
+```
+
+Run local server:
+```
+php -S localhost:8000
+```
+
+
 ## Deployment
 
 The script lives at

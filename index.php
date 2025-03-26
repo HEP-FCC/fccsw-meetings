@@ -7,10 +7,13 @@ $url = $url . '&order=start';
 $response = json_decode(file_get_contents($url), true);
 
 $meetings = array();
+$meetings['today'] = array();
 $meetings['this-week'] = array();
 $meetings['next-week'] = array();
 $meetings['this-month'] = array();
 $meetings['next-month'] = array();
+$laterNextMonth = false;
+$laterThisWeek = false;
 foreach ($response['results'] as $result) {
   $meeting = array();
 
@@ -42,16 +45,18 @@ foreach ($response['results'] as $result) {
 
   // print_r($result);
   // echo "<br><br><br><br>";
-  $laterNextmonth = false;
-  if (date('W') == $startTime->format('W')) {
+  // if (($startTime->diff(new DateTime()))->format('%d') == 0) {
+  if (date('%Y-%W-%d') == $startTime->format('%Y-%W-%d')) {
+    array_push($meetings['today'], $meeting);
+  } elseif (date('W') == $startTime->format('W')) {
     array_push($meetings['this-week'], $meeting);
     if ((date('m') + 1) == $startTime->format('m')) {
-      $laterNextmonth = true;
+      $laterNextMonth = true;
     }
   } elseif ((date('W') + 1) == $startTime->format('W')) {
     array_push($meetings['next-week'], $meeting);
     if ((date('m') + 1) == $startTime->format('m')) {
-      $laterNextmonth = true;
+      $laterNextMonth = true;
     }
   } elseif (date('m') == $startTime->format('m')) {
     array_push($meetings['this-month'], $meeting);
@@ -67,30 +72,40 @@ foreach ($response['results'] as $result) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>FCC Software Meetings</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet"
-          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-          crossorigin="anonymous">
+    <link href="./bootstrap/bootstrap-5.3.3/css/bootstrap.min.css"
+          rel="stylesheet">
   </head>
   <body>
     <div class="container">
       <?php foreach($meetings as $period => $meetingsInPeriod): ?>
-      <?php if ($period == 'this-week' && count($meetingsInPeriod) > 0): ?>
-      <h4 class="mb-0">This Week</h4>
+      <?php if ($period == 'today' && count($meetingsInPeriod) > 0): ?>
+      <h4 class="mt-3 mb-0">Today</h4>
       <?php endif ?>
+
+      <?php if ($period == 'this-week' && count($meetingsInPeriod) > 0): ?>
+      <?php if (count($meetings['today']) > 0): ?>
+      <h4 class="mt-3 mb-0">Later This Week</h4>
+      <?php else: ?>
+      <h4 class="mt-3 mb-0">This Week</h4>
+      <?php endif ?>
+      <?php endif ?>
+
       <?php if ($period == 'next-week' && count($meetingsInPeriod) > 0): ?>
       <h4 class="mt-3 mb-0">Next Week</h4>
       <?php endif ?>
+
       <?php if ($period == 'this-month' && count($meetingsInPeriod) > 0): ?>
       <h4 class="mt-3 mb-0">Later This Month</h4>
       <?php endif ?>
+
       <?php if ($period == 'next-month' && count($meetingsInPeriod) > 0): ?>
-      <?php if ($laterNextmonth): ?>
+      <?php if ($laterNextMonth): ?>
       <h4 class="mt-3 mb-0">Later Next Month</h4>
       <?php else: ?>
       <h4 class="mt-3 mb-0">Next Month</h4>
       <?php endif ?>
       <?php endif ?>
+
       <?php foreach($meetingsInPeriod as $meeting): ?>
       <div class="row me-1">
         <div class="col mt-3 bg-light rounded">
@@ -162,8 +177,6 @@ foreach ($response['results'] as $result) {
       <p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-            crossorigin="anonymous"></script>
+    <script src="./bootstrap/bootstrap-5.3.3/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
